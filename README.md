@@ -18,9 +18,81 @@ half_add_sub.v	Arithmetic-circuit RTL
 half_add_sub_tb.v	Stimulus and VCD generation
 
 ### Verilog Program
-```
-```
+// gedit half_add_sub.v
+module half_adder (
+    input  wire A,
+    input  wire B,
+    output wire Sum,
+    output wire Carry
+);
+    assign Sum   = A ^ B;   // XOR
+    assign Carry = A & B;   // AND
+endmodule
+ 
+module half_subtractor (
+    input  wire A,
+    input  wire B,
+    output wire Diff,
+    output wire Borrow
+);
+    assign Diff   = A ^ B;      // XOR
+    assign Borrow = (~A) & B;  // A' . B
+endmodule
+
 ### Testbench Program
+// gedit tb5.v
+ 
+module tb5;
+    reg  clk, rst, D, T;
+    wire Qd, Qt;
+ 
+    // Instantiate the D Flip-Flop
+    dff dff_uut (
+        .clk(clk),
+        .rst(rst),
+        .D(D),
+        .Q(Qd)
+    );
+ 
+    // Instantiate the T Flip-Flop
+    tff tff_uut (
+        .clk(clk),
+        .rst(rst),
+        .T(T),
+        .Q(Qt)
+    );
+ 
+    // ---- Clock generation: 10 time-unit period ----
+    initial clk = 0;
+    always #5 clk = ~clk;
+ 
+    initial begin
+        // ---- VCD dump setup ----
+        $dumpfile("dff_tff.vcd");   // name of the VCD file to be generated
+        $dumpvars(0, tb5);            // dump all signals in this testbench hierarchy
+ 
+        $monitor("Time=%0t rst=%b clk=%b | D=%b Qd=%b | T=%b Qt=%b",
+                  $time, rst, clk, D, Qd, T, Qt);
+ 
+        // ---- Apply asynchronous reset ----
+        rst = 1; D = 0; T = 0;
+        #7  rst = 0;
+ 
+        // ---- Apply test vectors on successive clock edges ----
+        @(negedge clk); D = 1; T = 1;
+        @(negedge clk); D = 0; T = 1;
+        @(negedge clk); D = 1; T = 0;
+        @(negedge clk); D = 0; T = 0;
+        @(negedge clk); D = 1; T = 1;
+        @(negedge clk); D = 1; T = 1;
+ 
+        // ---- Apply reset again mid-simulation ----
+        @(negedge clk); rst = 1;
+        @(negedge clk); rst = 0; D = 1; T = 1;
+ 
+        #20 $finish;
+    end
+endmodule
 
 
 ### Truth Table
@@ -84,27 +156,10 @@ The Half Adder and Half Subtractor were realized using Verilog HDL:
 The design was compiled and simulated using Synopsys VCS, and the functionality was verified using DVE waveform analysis, matching the expected truth table.
 
 ### Output
+<img width="1920" height="1080" alt="Screenshot 2026-11-18 111237" src="https://github.com/user-attachments/assets/6c2fae6c-338c-4bde-8a27-4fe45e2c6086" />
 
 
-### Viva-Voce Questions
 
-•	What is a Half Adder, and what are its limitations compared to a Full Adder?
-
-•	What is a Half Subtractor, and what does the Borrow output signify?
-
-•	Why is the Sum/Difference expression identical (A⊕B) for both circuits, while Carry and Borrow differ?
-
-•	What gate realizes the XOR function, and why is it central to both circuits?
-
-•	What is the purpose of a Verilog testbench?
-
-•	Why is a VCD file generated, and what does $dumpvars(0, tb) do?
-
-•	What is the purpose of ./simv?
-
-•	What is the difference between simulation and synthesis?
-
-•	How would you extend this design to a Full Adder/Full Subtractor?
 
 ### Result
 
